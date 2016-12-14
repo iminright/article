@@ -1,0 +1,69 @@
+Base: An Acid Alternative
+In partitioned databases, trading some consistency for availability can lead to dramatic improvements in scalability.
+
+Dan Pritchett, Ebay
+原文 http://queue.acm.org/detail.cfm?id=1394128
+
+Web applications have grown in popularity over the past decade. Whether you are building an application 
+for end users or application developers (i.e., services), your hope is most likely that your application 
+will find broad adoption—and with broad adoption will come transactional growth. 
+If your application relies upon persistence, then data storage will probably become your bottleneck.
+在过去10年Web应用越来越流行。作为一个应用的开发者也好，维护这也好，你肯定希望你的应用程序被越来越多的人使用，如果不幸你的应用
+程序依赖于持久化的数据，那么数据存储也许会成为你应用程序的瓶颈。
+
+There are two strategies for scaling any application. 
+The first, and by far the easiest, is vertical scaling: moving the application to larger computers. 
+Vertical scaling works reasonably well for data but has several limitations. 
+The most obvious limitation is outgrowing the capacity of the largest system available. 
+Vertical scaling is also expensive, as adding transactional capacity usually requires purchasing the next larger system. 
+Vertical scaling often creates vendor lock, further adding to costs.
+这里有两个方案来搭建可扩展的应用程序。第一，也是到目前为止最简单的，垂直扩展：将你的应用程序迁移到性能更强的机器上。垂直扩展简单方便但是他有几个限制条件。
+最显而易见的一个就是你需要不断的增加性能来应对日益庞大的应用程序，不幸的是垂直扩展的成本非常昂贵的。
+
+Horizontal scaling offers more flexibility but is also considerably more complex. 
+Horizontal data scaling can be performed along two vectors. 
+Functional scaling involves grouping data by function and spreading functional groups across databases. 
+Splitting data within functional areas across multiple databases, or sharding,adds the second dimension to horizontal scaling. 
+The diagram in figure 1 illustrates horizontal data-scaling strategies.
+还有一个方案，我们称之为水平扩展，他为我们的应用程序提供了更高的扩展性，但是也带了更高的复杂性
+水平扩展可以从两个维度入手。
+一个维度是根据业务功能扩展，包括将数据按照业务核心功能分组并且将业务组分布在各个数据库中(比如将一个库切为
+订单库+产品库+用户库3个库，国内大部分文章将这种切分方式称之为垂直切分，将业务上紧密关联的数据放在一个库中)。
+另一个维度是切分数据，一般可以通过分片(比如当订单库数据超过千万级别时，根据订单类型或者追求均匀分片的
+话根据订单ID，用户ID什么的作hash将一个表拆成多张表，国内一般称之为水平拆分)。
+笔者自己唠叨几句，分库分表效果如何还是看你到底使用了几个数据库实例，因为数据库单库的QPS是有上限的，
+如果你只有一个数据库实例，那你分表再分出花来，也是白扯。
+
+As figure 1 illustrates, both approaches to horizontal scaling can be applied at once. 
+Users, products, and transactions can be in separate databases. 
+Additionally, each functional area can be split across multiple databases for transactional capacity. 
+As shown in the diagram, functional areas can be scaled independently of one another.
+就如图一所示，水平扩展的两个维度可以同时使用。
+用户，产品，交易表可以被放在不同的数据库里。
+另，每一个业务库如用户下还可以再分多个库，以提高数据库事务处理能力。
+如图所示，业务库的扩展对其他库使透明的。
+
+Functional partitioning is important for achieving high degrees of scalability. 
+Any good database architecture will decompose the schema into tables grouped by functionality.
+Users, products, transactions, and communication are examples of functional areas.
+Leveraging database concepts such as foreign keys is a common approach for maintaining consistency across these functional areas.
+业务功能的划分对于实现高度可扩展性的应用程序非常重要。
+任何良好的数据库架构都会根据业务分解出对应的scheme，比如user.t_user,user.t_user_log,order.t_order.
+Users, products, transactions, and communication都是业务划分的例子。
+利用诸如外键（比如order表的productId）的数据库概念是用于在这些业务库之间维持一致性的常用方法。
+
+Relying on database constraints to ensure consistency across functional groups creates a coupling of the schema to a database deployment strategy.
+For constraints to be applied, the tables must reside on a single database server, precluding horizontal scaling as transaction rates grow. 
+In many cases, the easiest scale-out opportunity is moving functional groups of data onto discrete database servers.
+依赖数据库约束以确保跨业务库的一致性会造成不必要的耦合。
+要应用数据库的约束，所有的表都必须在一个数据库实例中，显而易见，这样不利于水平扩展。
+在大多数情况下，最简单的水平扩展是将数据按业务划分并且放到不同的数据库服务器中。
+
+Schemas that can scale to very high transaction volumes will place functionally distinct data on different database servers. 
+This requires moving data constraints out of the database and into the application. 
+This also introduces several challenges that are addressed later in this article.
+高并发情况下扛得住的方案会将数据分散在不同的数据库服务器中。
+这样以来，数据库层面的约束不再有用，这需要我们将原本在数据库层面使用的约束逻辑迁移到应用层。
+这么做会带来一些挑战，解决方案将在文章的后面一点提到。
+
+
