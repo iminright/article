@@ -66,4 +66,46 @@ This also introduces several challenges that are addressed later in this article
 这样以来，数据库层面的约束不再有用，这需要我们将原本在数据库层面使用的约束逻辑迁移到应用层。
 这么做会带来一些挑战，解决方案将在文章的后面一点提到。
 
+CAP Theorem
+Eric Brewer, a professor at the University of California, Berkeley, and cofounder and chief scientist at Inktomi
+, made the conjecture that Web services cannot ensure all three of the following properties at once (signified by the acronym CAP):2
+CAP 理论
+Eric Brewer, 加州大学伯克利分校的教授，证明了你不能同时满足CAP三个条件。
+
+Consistency. The client perceives that a set of operations has occurred all at once.
+Availability. Every operation must terminate in an intended response.
+Partition tolerance. Operations will complete, even if individual components are unavailable.
+Specifically, a Web application can support, at most, only two of these properties with any database design. 
+Obviously, any horizontal scaling strategy is based on data partitioning; therefore, designers are forced to decide between consistency and availability.
+一致性.客户端在同一时间感知到一组操作在已经产生了结果。
+可用性.每个操作必须以预期的响应终止。
+分区容差.即使某些组件不可用，操作也将会完成。
+特别指出，一个基于数据库设计的WEB应用只能支持上述三个属性中最多两个属性。显然，所有的水平扩展策略都是基于数据分区的；
+因此，分区容差是无法避免的，所以设计者将要在一致性和可用性两个方面作出选择。
+
+ACID Solutions
+ACID database transactions greatly simplify the job of the application developer. As signified by the acronym, ACID transactions provide the following guarantees:
+Atomicity. All of the operations in the transaction will complete, or none will.
+Consistency. The database will be in a consistent state when the transaction begins and ends.
+Isolation. The transaction will behave as if it is the only operation being performed upon the database.
+Durability. Upon completion of the transaction, the operation will not be reversed.
+
+ACID 解决方案
+ACID 极大的简化了开发者的工作。ACID提供了如下4个保证：
+原子性.所有的操作要么全部完成，要么全部失败。
+一致性.数据库在事务开始时和结束时都将保持一致的状态。
+隔离性.事务对于其他事务来说是透明的。
+持续性.事务完成之后，操作将不会被撤销。
+
+Database vendors long ago recognized the need for partitioning databases and introduced a technique known as 2PC (two-phase commit) for providing ACID guarantees across multiple database instances. The protocol is broken into two phases:
+	•	First, the transaction coordinator asks each database involved to precommit the operation and indicate whether commit is possible. If all databases agree the commit can proceed, then phase 2 begins.
+	•	The transaction coordinator asks each database to commit the data.
+
+数据库供应商早就认识到数据库需要分区才能提供更高的性能，所以他们引入了2PC这个技术来保证在多数据库实例之间的ACID。这个协议被分为两个阶段。
+第一阶段，事务协调者请求每个涉及的数据库执行预提交操作并指示是否可以提交。如果所有的数据库都同意执行那么这个提交就可以执行，接下来就是开始第二阶段。
+第二阶段，事务协调者要求每个数据库都去提交他们对数据的改动。
+
+
+
+
 
