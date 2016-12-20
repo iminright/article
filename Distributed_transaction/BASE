@@ -105,6 +105,39 @@ Database vendors long ago recognized the need for partitioning databases and int
 第一阶段，事务协调者请求每个涉及的数据库执行预提交操作并指示是否可以提交。如果所有的数据库都同意执行那么这个提交就可以执行，接下来就是开始第二阶段。
 第二阶段，事务协调者要求每个数据库都去提交他们对数据的改动。
 
+If any database vetoes the commit, then all databases are asked to roll back their portions of the transaction. 
+What is the shortcoming? We are getting consistency across partitions.
+If Brewer is correct, then we must be impacting availability, but how can that be?
+如果有数据库不同意提交，那么所有参与的数据库将会被要求回滚他们的事务。
+这么做的缺点是什么呢？我们获得了分布式一致性。
+如果Brewer是对的，那将对我们的系统的可用性造成影响，为什么会这样呢？
+
+The availability of any system is the product of the availability of the components required for operation. 
+The last part of that statement is the most important. Components that may be used by the system but are not required do not reduce system availability. 
+A transaction involving two databases in a 2PC commit will have the availability of the product of the availability of each database. 
+For example, if we assume each database has 99.9 percent availability, then the availability of the transaction becomes 99.8 percent, 
+or an additional downtime of 43 minutes per month.
+任何系统的可用性是操作所需组件可用性的乘积。
+每一个被系统使用的组建不可避免的降低了系统的可用性。
+一个包含两个数据库事务的2pc提交将会影响两个数据库的可用性？？
+举个例子，假设两个数据库都有99.9的可用性，那么事务的可用性将是99.8，换个说法就是每个月都有43min的额外宕机时间。
+
+An ACID Alternative
+If ACID provides the consistency choice for partitioned databases, then how do you achieve availability instead? 
+One answer is BASE (basically available, soft state, eventually consistent).
+一种ACID的替换方案
+如果说ACID保证了分布式的一致性，那么你怎么来实现分布式的可用性呢？
+答案就是BASE(基本可用，软状态？？，最终一致性)
+
+BASE is diametrically opposed to ACID. Where ACID is pessimistic and forces consistency at the end of every operation, 
+BASE is optimistic and accepts that the database consistency will be in a state of flux. Although this sounds impossible to cope with, 
+in reality it is quite manageable and leads to levels of scalability that cannot be obtained with ACID.
+BASE是ACID的对立面。ACID保证了强一致性，他悲观的认为每一个操作都有失败的可能，
+BASE则是乐观的，他接受数据库的最终一致性。尽管这听上去不怎么靠谱，
+但事实上它相对ACID更易于管理而且更容易达到更高的水平扩展性。
+
+
+
 
 
 
