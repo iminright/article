@@ -136,6 +136,63 @@ BASE是ACID的对立面。ACID保证了强一致性，他悲观的认为每一�
 BASE则是乐观的，他接受数据库的最终一致性。尽管这听上去不怎么靠谱，
 但事实上它相对ACID更易于管理而且更容易达到更高的水平扩展性。
 
+The availability of BASE is achieved through supporting partial failures without total system failure. 
+Here is a simple example: if users are partitioned across five database servers, BASE design encourages crafting operations in such a way that a user database failure impacts only the 20 percent of the users on that particular host. There is no magic involved, but this does lead to higher perceived availability of the system.
+BASE提供的可用性是建立在支持部分故障而不是系统全局故障。
+举个简单的例子：假设有用户数据被分片存储在5个数据库服务器，如果有一个数据库服务器异常了的话只会影响20%的用户。
+这并没有什么魔法，但是却带来了更高的可用性。
+
+So, now that you have decomposed your data into functional groups and partitioned the busiest groups across multiple databases, 
+how do you incorporate BASE into your application? BASE requires a more in-depth analysis of the operations within a logical transaction than is typically applied to ACID. 
+What should you be looking for? The following sections provide some direction.
+好了，现在你已经将你的数据分散到了你的众多业务集群中并且将你最繁忙的业务集群进行了数据库分区，
+你怎么将BASE在你的应用中具体的实现？BASE需要深入的分析业务相对于传统的ACID。
+接下来的几个章节会指明一些方向。
+
+Consistency Patterns
+Following Brewer's conjecture, if BASE allows for availability in a partitioned database, then opportunities to relax consistency have to be identified. 
+This is often difficult because the tendency of both business stakeholders and developers is to assert that consistency is paramount to the success of the application. 
+Temporal inconsistency cannot be hidden from the end user, so both engineering and product owners must be involved in picking the opportunities for relaxing consistency.
+一致性模式
+根据Brewer的猜测，如果BASE支持了分布式的可用性，那么你就必须去识别有哪些场景可以适当的放松一致性的要求。
+在大多数情况下，这是非常困难的，原因在于业务利益相关者和开发人员的趋势是申明一致性对于应用程序是否成功是至关重要的.
+暂时的不一致是无法像最终用户隐藏的，所以工程师们和产品负责人必须同时发掘可降低一致性的场景。
+
+Figure 2 is a simple schema that illustrates consistency considerations for BASE.
+The user table holds user information including the total amount sold and bought. These are running totals. 
+The transaction table holds each transaction, relating the seller and buyer and the amount of the transaction. 
+These are gross oversimplifications of real tables but contain the necessary elements for illustrating several aspects of consistency.
+图二简单的说明了在BASE思想中对于一致性的考量。
+user表保存了用户的信息包括买卖的总金额（通过运行求和得到）
+transaction表保存了每次交易的信息，关联了买房及卖方以及这次交易的金额。
+这是从实际的表结构简化过来的表，但是包含的信息已经足够用来从几个方面说明一致性概念。
+
+In general, consistency across functional groups is easier to relax than within functional groups. 
+The example schema has two functional groups: users and transactions. 
+Each time an item is sold, a row is added to the transaction table and the counters for the buyer and seller are updated. 
+Using an ACID-style transaction, the SQL would be as shown in figure 3.
+一般来说，跨业务组的一致性程度比在业务组内的一致性程度更好去降低。
+就像例子里的两个功能组：users和transactions。
+每当有一个东西被卖出，transaction表中就增加一条数据，并且去跟新购买者何售卖者的数据。
+使用ACID的方式，SQL会像这个样子。
+begin;
+ insert into transaction(id, seller_id, buyer_id, amount) ;
+ update user set amt_sold=amt_sold + amount where id = seller_id ;
+ update user set amt_bought= amt_bought + amount where id = buyer_id ;
+end;
+
+The total bought and sold columns in the user table can be considered a cache of the transaction table. 
+It is present for efficiency of the system. Given this, the constraint on consistency could be relaxed. 
+The buyer and seller expectations can be set so their running balances do not reflect the result of a transaction immediately. 
+This is not uncommon, and in fact people encounter this delay between a transaction and their running balance regularly (e.g., ATM withdrawals and cellphone calls).
+user表里的买卖总金额列可以考虑为transaction表的缓存。
+买卖双方的余额并不会立即反应交易的结果。
+这并不罕见，事实上人们经常遇到这种在交易和余额之间的延迟（比如 ATM 撤回 和 手机通话？）
+
+
+
+
+
 
 
 
