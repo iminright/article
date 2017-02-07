@@ -1,0 +1,139 @@
+原文:http://alipay-rmsdeploy-dev-image.oss-cn-hangzhou-zmf.aliyuncs.com/rmsportal/OQRDayvKiYZSJHS.pdf
+
+1.Overview
+    XMap is a library that maps XML elements to Java objects using annotations on the objects. The library is currently used by Nuxeo Runtime to ease the usage of extension contributions.
+    Xmap类库的作用是利用Java对象上的注解将XML元素映射成Java对象。这个库目前被Nuxeo Runtime用于简化扩展贡献功能方面的使用。
+    The library was designed for usability, performance being a second goal. For instance the mapping is done in two steps: first a DOM representation of the XML is built, then the DOM tree is processed and DOM nodes are mapped to object fields as specified by annotations.
+    这个库在设计时首先考虑可用性指标，性能指标放在第二位。举个例子，映射分成了两步：1.构建xml的DOM结构，2.处理DOM结构并且将DOM节点映射到被指定注解的对象字段上。
+    The library is completely independent from Nuxeo Runtime and can be used by any type of Java application.
+    这个类库已经完全从Nuxeo Runtime项目中独立出来并且可以被任何类型的java应用使用。
+
+2 XMap Annotations
+    The mapping is completely described by annotations. Annotation can either be used on fields on methods. The XObject annotation can be used only on classes. This section describes the complete list of supported annotations.
+    映射关系完全是由注解描述的。注解可以既可以用在方法上也可以用在字段上。但是XObject注解只能用在类上。这章节将会介绍所有支持的注解。
+
+2.1 XObject
+    This annotation is supported only on classes. It marks the class as being mappable to an XML element.
+    这个注解只能作用在类上。他表示这个类可以作为可映射的XML元素。
+    This annotations supports 2 attributes: 1. value - specify the element name to which this class is mapped. The default value is “” which means this class is not mappable to a top level element but can be used as the type of a mappable field. The value must be an element name not a path. This means values like “metadata/title” are invalid while values like “metadata” are valid values. 2. order – specify the order to use when mapping the class fields. The default value is the empty array (i.e. no specific order).
+    这个注解有两个属性: 
+    1.value - 指定这个类映射的XML元素名称。默认值是””这表示不能被映射成一个顶级元素但是可以作为其他可映射字段的类型（这段话有点难懂，可以参考http://www.voidcn.com/blog/moudaen/article/p-87035.html），value的值必须是元素名称而不是路径。这表示像”metadata/title”这种值是非法的，而”metadata”这种值是合法的。
+    2.order - 指定映射的顺序。默认值是空的数组（如果你不显示指定order的值的话）
+
+2.2 XNode
+    This annotation is supported only on fields. It binds a field to a single XML node. This annotations supports 2 attributes: 
+    这个注解只能用在字段上。他将java字段和一个XML节点绑定在一起。这个注解支持两个属性：
+    1. value – specify the path of the XML element to bind to. Only descending paths are supported (i.e. paths descending the XML tree). The empty path is supported and refers to the current element. XML Elements are separated by using '/' characters. if you want to specify an attribute node you should use an '@‘ character。Paths are always relative to the element corresponding to the current container object.
+    The following paths are valid XMap paths: 
+    ● “/metadata/author/name” 
+    ● “metadata/author/name” 
+    ● “metadata/author@id” 
+    ● “@name” 
+    while the following paths are invalid: 
+    ● “../metadata/author/name” 
+    ● “../../metadata” 
+    ● “../”
+    1.value - 指定要绑定的XML元素的路径。只支持降序路径。如果路径是空的话，默认是指向当前元素的。XML元素使用’,'字符分隔。如果想要指定一个属性值那应该使用‘@’字符。路径总是相对于与当前对象对应的元素。
+    以下的路径格式是合法的：
+    ● “/metadata/author/name” 
+    ● “metadata/author/name” 
+    ● “metadata/author@id” 
+    ● “@name” 
+    以下是非法的
+    ● “../metadata/author/name” 
+    ● “../../metadata” 
+    ● “../”
+    2. trim – specify whether or not the XML string value should be trimmed before being applied to the field. The default is “true”。
+    2. trim - 指定是否要在将值映射到java字段之前做trim操作。默认是true。
+
+2.3 XNodeList
+    This annotation is supported only on fields. It is binding a field to a list of XML nodes. The field should be either an array or a Java Collection.
+    这个注解只能是用在字段上。作用是将字段和XML list 类型节点。这个字段应该为数组或者java集合。
+    This annotations supports 4 attributes: 
+    1. value – the same as for XNode value. 
+    2. trim - the same as XNode trim. 
+    3. type – the collection or the array type. 
+    4. componentType – the type of the collection (or array) elements. 
+    这个注解有4个属性：
+    1.value - 和XNode一样
+    2.trim - 和XNode一样
+    3.type - 集合或者数组的类型
+    4.componentType - 集合或者数组元素的类型
+    比如
+    @XNodeList(value="list/item", type=ArrayList.class, componentType=String.class) 
+    public List items;
+    @XnodeList(value="author@name", type=String[].class, componentType=String.class) 
+    public String[] names;
+
+2.4 XNodeMap
+    This annotation is supported only on fields. It binds a field to a map of XML nodes. The field should be a Java Map. This annotation supports 5 attributes: 
+    1. value – the same as for XNode value. 
+    2. trim - the same as XNode trim. 
+    3. key – a path to the node used as the Map key. The path is the same as for the XNode value with an additional constraint – only attribute nodes can be used as keys. 
+    4. type – the Map type. 
+    5. componentType – the type of the Map values.
+    这个注解只能是用在字段上。作用是绑定字段和XML map类型节点。java字段的类型应该是Map，这个注解支持5种属性:
+    1.value - 和XNode一样
+    2.trim - 和XNode一样
+    3.key - 指向用作Map键的节点的路径。 这个路径和XNode的value属性一样，只是多了一个约束条件 - 只有@节点才能作为key。
+    4.type - Map的类型
+    4.componentType - Map value的类型
+    @XNodeMap(value="properties/property", key="@name", type=HashMap.class, componentType=String.class) 
+    public Map properties;
+
+2.5 XContent
+    This annotation is supported only on fields. It binds a field to a the content of the given XML node. The content is either set as a String (by serializing the XML content) either set as a DocumentFragment depending on the field type. This annotations supports only 1 attribute: 
+    1. value – the same as for XNode value.
+    这个注解只能是用在字段上。作用是绑定字段和文本类型XML节点。内容要么设置为字符串（通过序列化XML内容），要么根据字段类型设置为DocumentFragment,这个注解只支持一个属性
+    1.value - 和XNode一样
+    @XContent("testContent”) 
+    public String testContent; 
+    @XContent("testContent”) 
+    public DocumentFragment testContent2;
+
+2.6 XParent
+    This annotation is supported only on fields. It binds a field to a the content of the parent object. The parent object is the object that contains the current object as a field. This annotations has no attributes.
+    这个注解只能是用在字段上。作用是绑定字段和父对象。父对象是包含当前对象作为字段的对象。这个注解不支持任何属性。
+    @XParent 
+    public Author owner;
+    
+3 Mapping complex !eld objects
+    What happens when a mappable object contains a field that is another mappable object?
+    当一个可映射的对象包含了另外一个可映射的对象时会发生什么？
+    As you may expect the field is detected as being mappable (the XObject annotation is found) and the mapping context is set to the element corresponding to this field.
+    你可能期望该字段被检测为可映射的（通过找到XObject注释），并将映射上下文设置为与此字段对应的元素。
+    When mapping a complex field the XParent annotation can be used to refer to the parent object.
+    当需要映射一个复杂对象字段的时候XParent注解可以被用来引用父对象。
+    In the following example you can see how the Author object is containing a mappable member of type Name:
+    这个XParent注解貌似没什么用，测试用例使不使用这个注解映射出的xml文件都是一样的。
+
+4 Value Factories
+    How are values applied from XML nodes to object fields?
+    XML文件中的值是怎么映射到java对象字段的？
+    When binding DOM nodes to object fields string values are converted to objects of the same type as the field. This is done by using a registry of value factories - see org.nuxeo.xmap.XValueFactory.
+    当DOM节点绑定到对象字段时，字符串值将转换为与java类字段类型相同的对象。这个是通过org.nuxeo.xmap.XValueFactory来完成的。
+    There is a built-in set of value factories that covers common primitive types and some common Java types. Here is the list of built-in value factories。
+    一些通用的类型转换已经被内置到了类库中。以下是已经内置转换器的类型
+    1. Integer 2. Long 3. Double 4. Float 5. Boolean 6. String 7. Date 8. File 9. URL 10. Class
+    This means string values are correctly set to fields having these types. When mapping fields with types not listed here you should register a value factory that is able to convert a string value to your desired type。
+    这表示String类型可以正确的被转换成上面10个java类型。如果需要转换的java类型不在上述列表中，那么你就需要自己注册一个转换器。
+    Example of how to set up a custom value factory that constructs a ComponentName object given a String value:
+    以下是一个自定义转换器使用的例子，将String类型转换为ComponentName类型
+    XMap xmap = new XMap(); 
+    xmap.setValueFactory(ComponentName.class, new XValueFactory() { 
+        @Override public Object getValue(Context context, String value) { 
+            return new ComponentName(value); 
+        } 
+    });
+    Tips:在将java object 映射到xml的时候ComponentName记得覆写toString()方法.
+
+5 XMap Context
+    The Class value factory uses the XMap Context class loader to load the class from the class name string. The default XMap Context uses the current thread context class loader to load classes.
+    转换器使用XMap上下文类加载器从类名字符串加载类。 默认的XMap Context使用当前线程上下文类加载器来加载类。
+    The context can be customized by extending the default context to be able to change the class loading rules. This allows for example to integrate XMap with OSGi bundles by changing the class loader used by XMap by the class loader of the bundle that contains the classes to load.
+    可以通过继承默认的上下文来使改变类加载规则成为可能。 比如将XMap与OSGi bundles集成（后面这句翻不来）
+    Without this feature the class loading would failed in an OSGi environment. On Eclipse this sort of problems are resolved by using the Eclipse-BundlePolicy header.
+    如果没有这个特性的话在OSGI环境下class loading可能会失败。如果使用Eclipse开发的话这类问题可以使用Eclipse-BundlePolicy来解决。
+
+6 Example
+    这段看原文吧，是代码没啥好翻译的
